@@ -1,0 +1,26 @@
+{
+  "bryson1": [
+    {
+      "question": "what is the first president in Tanzania?",
+      "options": {
+        "A": "Nyerere",
+        "B": "Dr Kikwete",
+        "C": "Dr Samia ",
+        "D": "Dr Bryson"
+      },
+      "correct_answer": "A"
+    }
+  ],
+  "bryson": [
+    {
+      "question": "what is the biggest animal in the world?",
+      "options": {
+        "A": "Elephant",
+        "B": "Girraph",
+        "C": "Monkey",
+        "D": "Cat"
+      },
+      "correct_answer": "A"
+    }
+  ]
+}
