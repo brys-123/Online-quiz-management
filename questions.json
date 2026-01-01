@@ -22,5 +22,27 @@
       },
       "correct_answer": "A"
     }
+  ],
+  "bry": [
+    {
+      "question": "what is the biggest animal in tanzania?",
+      "options": {
+        "A": "Elephant",
+        "B": "Girraph",
+        "C": "Monkey",
+        "D": "Cat"
+      },
+      "correct_answer": "A"
+    },
+    {
+      "question": "what is the tallest mountain in the world?",
+      "options": {
+        "A": "Kilimanjaro",
+        "B": "Evarest",
+        "C": "Meru",
+        "D": "Oldonyo lengai"
+      },
+      "correct_answer": "B"
+    }
   ]
 }

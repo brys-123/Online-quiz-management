@@ -19,6 +19,7 @@ app.secret_key = 'your-secret-key-change-this-in-production'
 ADMINS_FILE = 'admins.json'
 QUESTIONS_FILE = 'questions.json'
 ANSWERS_FILE = 'user_answers.json'
+QUIZ_SETTINGS_FILE = 'quiz_settings.json'
 
 # Initialize files if they don't exist
 def init_files():
@@ -30,6 +31,9 @@ def init_files():
             json.dump({}, f)
     if not os.path.exists(ANSWERS_FILE):
         with open(ANSWERS_FILE, 'w') as f:
+            json.dump({}, f)
+    if not os.path.exists(QUIZ_SETTINGS_FILE):
+        with open(QUIZ_SETTINGS_FILE, 'w') as f:
             json.dump({}, f)
     
     # Migrate old data format to new format
@@ -100,6 +104,16 @@ def load_answers():
 def save_answers(answers):
     with open(ANSWERS_FILE, 'w') as f:
         json.dump(answers, f, indent=2)
+
+# Load quiz settings
+def load_quiz_settings():
+    with open(QUIZ_SETTINGS_FILE, 'r') as f:
+        return json.load(f)
+
+# Save quiz settings
+def save_quiz_settings(settings):
+    with open(QUIZ_SETTINGS_FILE, 'w') as f:
+        json.dump(settings, f, indent=2)
 
 # HTML Templates
 HOME_TEMPLATE = '''
@@ -460,6 +474,27 @@ ADMIN_PANEL_TEMPLATE = '''
             border-radius: 5px;
             text-align: center;
         }
+        .timer-settings {
+            background: #fff3cd;
+            padding: 20px;
+            border-radius: 5px;
+            border-left: 4px solid #ffc107;
+            margin-bottom: 20px;
+        }
+        .timer-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .timer-badge {
+            background: #ffc107;
+            color: #000;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+        }
     </style>
     <script>
         function showTab(tabName) {
@@ -487,6 +522,7 @@ ADMIN_PANEL_TEMPLATE = '''
         
         <div class="nav-tabs">
             <button class="nav-tab active" onclick="showTab('questions-tab')">📋 My Questions</button>
+            <button class="nav-tab" onclick="showTab('settings-tab')">⏱️ Quiz Settings</button>
             <button class="nav-tab" onclick="showTab('results-tab')">📊 Student Results</button>
         </div>
         
@@ -552,6 +588,48 @@ ADMIN_PANEL_TEMPLATE = '''
                 {% else %}
                     <p style="text-align: center; color: #888; padding: 20px;">No questions yet. Add your first question above!</p>
                 {% endif %}
+            </div>
+        </div>
+        
+        <!-- Quiz Settings Tab -->
+        <div id="settings-tab" class="tab-content" style="display: none;">
+            <h3>⏱️ Quiz Timer Settings</h3>
+            
+            <div class="timer-settings">
+                <h4>Current Timer Setting:</h4>
+                <div class="timer-info">
+                    {% if quiz_time_limit > 0 %}
+                        <span class="timer-badge">⏱️ {{ quiz_time_limit }} minutes</span>
+                        <span style="color: #666;">Students will have {{ quiz_time_limit }} minutes to complete the quiz</span>
+                    {% else %}
+                        <span class="timer-badge">♾️ No Time Limit</span>
+                        <span style="color: #666;">Students can take unlimited time</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <form method="POST" action="{{ url_for('update_quiz_settings') }}">
+                <div class="form-group">
+                    <label>Quiz Time Limit (minutes):</label>
+                    <input type="number" name="time_limit" min="0" max="180" value="{{ quiz_time_limit }}" 
+                           placeholder="Enter time in minutes (0 = no limit)" required>
+                    <small style="color: #666; display: block; margin-top: 5px;">
+                        Enter 0 for no time limit, or specify minutes (e.g., 30 for 30 minutes)
+                    </small>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">💾 Save Timer Settings</button>
+            </form>
+            
+            <div style="margin-top: 30px; padding: 20px; background: #e8f4f8; border-radius: 5px;">
+                <h4>ℹ️ How the Timer Works:</h4>
+                <ul style="color: #666;">
+                    <li>When set to 0: Students have unlimited time to complete the quiz</li>
+                    <li>When set to a number: A countdown timer appears on the quiz page</li>
+                    <li>The quiz automatically submits when time runs out</li>
+                    <li>Students can see the remaining time at the top of their quiz</li>
+                    <li>Recommended: 1-2 minutes per question (e.g., 30 minutes for 15 questions)</li>
+                </ul>
             </div>
         </div>
         
@@ -658,6 +736,16 @@ QUIZ_SELECT_TEMPLATE = '''
             margin: 5px 0;
             color: #666;
         }
+        .timer-badge {
+            background: #ffc107;
+            color: #000;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 5px;
+        }
         .btn {
             padding: 12px 30px;
             background: #3498db;
@@ -696,6 +784,11 @@ QUIZ_SELECT_TEMPLATE = '''
                     <div class="quiz-info">
                         <h3>{{ quiz.admin_name }}'s Quiz</h3>
                         <p>📝 <strong>{{ quiz.question_count }}</strong> questions</p>
+                        {% if quiz.time_limit > 0 %}
+                            <span class="timer-badge">⏱️ {{ quiz.time_limit }} minutes</span>
+                        {% else %}
+                            <span class="timer-badge">♾️ No time limit</span>
+                        {% endif %}
                     </div>
                     <a href="{{ url_for('take_quiz', admin_id=quiz.admin_id) }}" class="btn">Start Quiz →</a>
                 </div>
@@ -744,6 +837,35 @@ USER_QUIZ_TEMPLATE = '''
             border-radius: 5px;
             margin-bottom: 20px;
             text-align: center;
+        }
+        .timer-display {
+            background: #fff3cd;
+            border: 3px solid #ffc107;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            position: sticky;
+            top: 20px;
+            z-index: 1000;
+        }
+        .timer-display.warning {
+            background: #f8d7da;
+            border-color: #e74c3c;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .timer-text {
+            font-size: 36px;
+            font-weight: bold;
+            color: #333;
+            margin: 10px 0;
+        }
+        .timer-text.warning {
+            color: #e74c3c;
         }
         .question {
             background: #f9f9f9;
@@ -809,6 +931,43 @@ USER_QUIZ_TEMPLATE = '''
             color: #888;
         }
     </style>
+    <script>
+        let timeLimit = {{ time_limit }};  // in minutes
+        let timeRemaining = timeLimit * 60;  // convert to seconds
+        
+        function updateTimer() {
+            if (timeLimit === 0) return;  // No timer if time limit is 0
+            
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            
+            const timerDisplay = document.getElementById('timer-display');
+            const timerText = document.getElementById('timer-text');
+            
+            timerText.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Warning when less than 5 minutes
+            if (timeRemaining <= 300) {
+                timerDisplay.classList.add('warning');
+                timerText.classList.add('warning');
+            }
+            
+            if (timeRemaining <= 0) {
+                // Auto-submit when time runs out
+                alert('Time is up! Your quiz will be submitted automatically.');
+                document.getElementById('quiz-form').submit();
+            }
+            
+            timeRemaining--;
+        }
+        
+        window.onload = function() {
+            if (timeLimit > 0) {
+                updateTimer();  // Initial call
+                setInterval(updateTimer, 1000);  // Update every second
+            }
+        };
+    </script>
 </head>
 <body>
     <div class="container">
@@ -819,7 +978,15 @@ USER_QUIZ_TEMPLATE = '''
                 <strong>Quiz by:</strong> {{ admin_name }} | <strong>Questions:</strong> {{ questions|length }}
             </div>
             
-            <form method="POST" action="{{ url_for('submit_quiz') }}">
+            {% if time_limit > 0 %}
+                <div id="timer-display" class="timer-display">
+                    <div style="font-size: 18px; color: #666;">⏱️ Time Remaining</div>
+                    <div id="timer-text" class="timer-text">{{ time_limit }}:00</div>
+                    <div style="font-size: 14px; color: #888;">Your quiz will auto-submit when time runs out</div>
+                </div>
+            {% endif %}
+            
+            <form id="quiz-form" method="POST" action="{{ url_for('submit_quiz') }}">
                 <input type="text" name="student_name" class="name-input" placeholder="Enter your name" required>
                 <input type="hidden" name="admin_id" value="{{ admin_id }}">
                 
@@ -996,6 +1163,11 @@ def admin_login():
             }
             save_admins(admins)
             
+            # Initialize quiz settings for new admin
+            quiz_settings = load_quiz_settings()
+            quiz_settings[username] = {'time_limit': 0}  # Default: no time limit
+            save_quiz_settings(quiz_settings)
+            
             flash('Admin account created successfully! Please login.', 'success')
             return redirect(url_for('admin_login'))
         
@@ -1041,6 +1213,10 @@ def admin_panel():
     all_answers = load_answers()
     admin_answers = all_answers.get(current_admin, [])
     
+    # Get quiz settings
+    quiz_settings = load_quiz_settings()
+    admin_settings = quiz_settings.get(current_admin, {'time_limit': 0})
+    
     # Process student results for display
     student_results = []
     for answer in admin_answers:
@@ -1058,7 +1234,23 @@ def admin_panel():
     return render_template_string(ADMIN_PANEL_TEMPLATE, 
                                  current_admin=current_admin,
                                  questions=admin_questions,
-                                 student_results=student_results)
+                                 student_results=student_results,
+                                 quiz_time_limit=admin_settings['time_limit'])
+
+@app.route('/admin/update-settings', methods=['POST'])
+def update_quiz_settings():
+    if 'admin' not in session:
+        return redirect(url_for('admin_login'))
+    
+    current_admin = session['admin']
+    time_limit = int(request.form.get('time_limit', 0))
+    
+    quiz_settings = load_quiz_settings()
+    quiz_settings[current_admin] = {'time_limit': time_limit}
+    save_quiz_settings(quiz_settings)
+    
+    flash('Quiz timer settings updated successfully!', 'success')
+    return redirect(url_for('admin_panel'))
 
 @app.route('/admin/delete/<int:index>', methods=['POST'])
 def delete_question(index):
@@ -1287,14 +1479,17 @@ def logout():
 def user_quiz():
     # Show list of all available quizzes
     all_questions = load_questions()
+    quiz_settings = load_quiz_settings()
     
     available_quizzes = []
     for admin_id, questions in all_questions.items():
         if questions:  # Only show admins with questions
+            admin_settings = quiz_settings.get(admin_id, {'time_limit': 0})
             available_quizzes.append({
                 'admin_id': admin_id,
                 'admin_name': admin_id,
-                'question_count': len(questions)
+                'question_count': len(questions),
+                'time_limit': admin_settings['time_limit']
             })
     
     return render_template_string(QUIZ_SELECT_TEMPLATE, available_quizzes=available_quizzes)
@@ -1305,10 +1500,15 @@ def take_quiz(admin_id):
     all_questions = load_questions()
     questions = all_questions.get(admin_id, [])
     
+    # Get timer settings
+    quiz_settings = load_quiz_settings()
+    admin_settings = quiz_settings.get(admin_id, {'time_limit': 0})
+    
     return render_template_string(USER_QUIZ_TEMPLATE, 
                                  questions=questions, 
                                  admin_name=admin_id,
-                                 admin_id=admin_id)
+                                 admin_id=admin_id,
+                                 time_limit=admin_settings['time_limit'])
 
 @app.route('/quiz/submit', methods=['POST'])
 def submit_quiz():
@@ -1363,10 +1563,11 @@ if __name__ == '__main__':
     print("🚀 Quiz System Starting...")
     print("="*50)
     print("\n📍 Access: http://127.0.0.1:5000")
-    print("\n✨ New Features:")
+    print("\n✨ Features:")
     print("   • Multi-admin support")
     print("   • Admin registration system")
-    print("   • Separate data per admin")
-    print("   • Excel export for results")
+    print("   • Quiz timer feature")
+    print("   • Excel & PDF export")
+    print("   • Auto-submit on timeout")
     print("\n" + "="*50 + "\n")
     app.run(debug=True, port=5000)
