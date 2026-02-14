@@ -1,16 +1,4 @@
 {
-  "bryson1": [
-    {
-      "question": "what is the first president in Tanzania?",
-      "options": {
-        "A": "Nyerere",
-        "B": "Dr Kikwete",
-        "C": "Dr Samia ",
-        "D": "Dr Bryson"
-      },
-      "correct_answer": "A"
-    }
-  ],
   "bryson": [
     {
       "question": "what is the biggest animal in the world?",
@@ -21,28 +9,26 @@
         "D": "Cat"
       },
       "correct_answer": "A"
-    }
-  ],
-  "bry": [
+    },
     {
-      "question": "what is the biggest animal in tanzania?",
+      "question": "what is 2 + 3 = ?",
       "options": {
-        "A": "Elephant",
-        "B": "Girraph",
-        "C": "Monkey",
-        "D": "Cat"
+        "A": "5",
+        "B": "4",
+        "C": "6",
+        "D": "2"
       },
       "correct_answer": "A"
     },
     {
-      "question": "what is the tallest mountain in the world?",
+      "question": "what is 44 x 4 = ?",
       "options": {
-        "A": "Kilimanjaro",
-        "B": "Evarest",
-        "C": "Meru",
-        "D": "Oldonyo lengai"
+        "A": "176",
+        "B": "234",
+        "C": "22",
+        "D": "44"
       },
-      "correct_answer": "B"
+      "correct_answer": "A"
     }
   ]
 }

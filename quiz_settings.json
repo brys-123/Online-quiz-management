@@ -1,5 +1,23 @@
 {
-  "bry": {
+  "bryson": {
     "time_limit": 1
+  },
+  "bryson1": {
+    "time_limit": 0
+  },
+  "bryson2": {
+    "time_limit": 0
+  },
+  "bryson4": {
+    "time_limit": 0
+  },
+  "bryson12": {
+    "time_limit": 0
+  },
+  "bryson23": {
+    "time_limit": 0
+  },
+  "ramsey": {
+    "time_limit": 0
   }
 }
