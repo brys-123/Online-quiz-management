@@ -1,0 +1,33 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Python
+*.egg-info/
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Application data (optional - keep if you want version control)
+# user_answers.json
+# admins.json
